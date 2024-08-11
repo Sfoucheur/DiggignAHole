@@ -25,6 +25,9 @@ logging.basicConfig(
     ]
 )
 
+# Suppress PIL logging
+logging.getLogger('PIL').setLevel(logging.ERROR)
+
 pyautogui.MINIMUM_DURATION = 0
 pyautogui.MINIMUM_SLEEP = 0
 pyautogui.PAUSE = 0
