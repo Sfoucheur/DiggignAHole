@@ -189,10 +189,7 @@ class Ui:
             with open(self.CONFIG_FILE, 'r') as file:
                 config = json.load(file)
                 # Load screen selection and checkbox state
-                if 'selected_screen' in config:
-                    selected_screen = config['selected_screen']
-                    if selected_screen:
-                        self.screen_var.set(selected_screen)
+
                 if 'grays_scale_state' in config:
                     self.gray_scale_enabled.set(config['grays_scale_state'])
                 if 'detection_threshold' in config:
@@ -204,6 +201,24 @@ class Ui:
                     self.move_duration_var.set(config['move_duration'])
                 if 'sleep_duration' in config:
                     self.sleep_duration_var.set(config['sleep_duration'])
+                if 'selected_screen' in config:
+                    selected_screen = config['selected_screen']
+                    if selected_screen:
+                        self.screen_var.set(selected_screen)
+                    else:
+                        monitors = get_monitors()
+                        screen_options = [f"Screen {
+                            i + 1} ({screen.width}x{screen.height})" for i, screen in enumerate(monitors)]
+                        config = {
+                            'selected_screen': screen_options[0],
+                            'grays_scale_state': self.gray_scale_enabled.get(),
+                            'detection_threshold': self.detection_threshold_var.get(),
+                            'click_randomness': self.click_randomness_var.get(),
+                            "move_duration": self.move_duration_var.get(),
+                            "sleep_duration": self.sleep_duration_var.get()
+                        }
+                        self.save_configuration(config)
+                        self.screen_var.set(screen_options[0])
 
     def save_configuration(self, config):
         with open(self.CONFIG_FILE, 'w') as file:

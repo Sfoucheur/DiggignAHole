@@ -55,7 +55,7 @@ def moveBezier(center_x, center_y):
     u_fine = np.linspace(
         0, 1, num=2 + int(point_dist(x1, y1, center_x, center_y) / 50.0))
     points = interpolate.splev(u_fine, tck)
-    duration = main_ui.move_duration_var.get()
+    duration = main_ui.move_duration_var.get() / 10
     timeout = duration / len(points[0])
     point_list = zip(*(i.astype(int) for i in points))
     for point in point_list:

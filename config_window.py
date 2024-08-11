@@ -17,12 +17,21 @@ class ConfigWindow:
         self.window.configure(bg=self.ui_instance.colour1)
 
         # Intialize config vars
-        self.screen_var = self.ui_instance.screen_var
-        self.detection_threshold_var = self.ui_instance.detection_threshold_var
-        self.click_randomness_var = self.ui_instance.click_randomness_var
-        self.gray_scale_enabled = self.ui_instance.gray_scale_enabled
-        self.move_duration_var = self.ui_instance.move_duration_var
-        self.sleep_duration_var = self.ui_instance.sleep_duration_var
+        self.screen_var = tk.StringVar()  # Initialize screen_var
+        self.detection_threshold_var = tk.IntVar()  # Initialize detection_threshold_var
+        self.click_randomness_var = tk.IntVar()  # Initialize click_randomness_var
+        self.gray_scale_enabled = tk.BooleanVar()  # Initialize gray_scale_enabled
+        self.move_duration_var = tk.IntVar()  # Initialize move_duration_var
+        self.sleep_duration_var = tk.IntVar()  # Initialize sleep_duration_var
+
+        self.screen_var.set(self.ui_instance.screen_var.get())
+        self.detection_threshold_var.set(
+            self.ui_instance.detection_threshold_var.get())
+        self.click_randomness_var.set(
+            self.ui_instance.click_randomness_var.get())
+        self.gray_scale_enabled.set(self.ui_instance.gray_scale_enabled.get())
+        self.move_duration_var.set(self.ui_instance.move_duration_var.get())
+        self.sleep_duration_var.set(self.ui_instance.sleep_duration_var.get())
 
         # Create and configure frames
         self.create_frames()
