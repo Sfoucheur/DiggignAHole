@@ -4,7 +4,6 @@ import time
 import random
 import os
 import keyboard
-import re
 from typing import List
 import numpy as np
 from scipy import interpolate
@@ -16,7 +15,6 @@ import shutil
 from PIL import Image  # Import PIL for image handling
 import threading  # Import threading
 import os
-import signal
 
 # Configure logging
 logging.basicConfig(
