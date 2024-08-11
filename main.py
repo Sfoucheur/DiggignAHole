@@ -14,6 +14,9 @@ from screeninfo import get_monitors
 from ui import Ui
 import shutil
 from PIL import Image  # Import PIL for image handling
+import threading  # Import threading
+import os
+import signal
 
 # Configure logging
 logging.basicConfig(
@@ -31,8 +34,6 @@ pyautogui.PAUSE = 0
 
 def point_dist(x1, y1, x2, y2):
     return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-
-# TODO Set param for duration
 
 
 def moveBezier(center_x, center_y):
@@ -54,7 +55,7 @@ def moveBezier(center_x, center_y):
     u_fine = np.linspace(
         0, 1, num=2 + int(point_dist(x1, y1, center_x, center_y) / 50.0))
     points = interpolate.splev(u_fine, tck)
-    duration = 0.1
+    duration = main_ui.move_duration_var.get()
     timeout = duration / len(points[0])
     point_list = zip(*(i.astype(int) for i in points))
     for point in point_list:
@@ -65,10 +66,14 @@ def moveBezier(center_x, center_y):
 
 
 def find_and_click(images: List[Image.Image], screen_region):
+    global thread
+    global running
     threshold = main_ui.detection_threshold_var.get() / 100
     grayscale = main_ui.gray_scale_enabled.get()
 
     for img in images:
+        if not running:
+            return False
         try:
             location = pyautogui.locateOnScreen(
                 image=img, region=screen_region, confidence=threshold, grayscale=grayscale)
@@ -96,7 +101,8 @@ def find_and_click(images: List[Image.Image], screen_region):
                 f"An exception occurred while processing image: {error}")
             # Continue processing the next image
 
-    logging.info("No collectable found!")
+    if running:
+        logging.info("No collectable found!")
     return False
 
 
@@ -146,21 +152,16 @@ def stop_script():
         logging.info('Stopped script!')
 
 
-def exit_script():
-    global running
-    logging.info('Exiting program!')
-    main_ui.root.quit()
-
-
 def start_script():
     global running
     if not running:
         running = True
         main_ui.status_label.config(text="Status: Running")
         logging.info('Started script!')
-        main_ui.root.after(100, main)
-
-# TODO fix dual screen issue
+        # Start the main function in a new thread
+        global thread
+        thread = threading.Thread(target=main, daemon=True)
+        thread.start()
 
 
 def get_screen_region(screen_index):
@@ -173,8 +174,7 @@ def get_screen_region(screen_index):
 
 
 running = False
-
-# TODO set interval as parameter
+thread = None
 
 
 def main():
@@ -183,29 +183,27 @@ def main():
     try:
         screen_index = main_ui.getScreenVar()  # Get the selected screen index
         screen_region = get_screen_region(screen_index)
-        interval = 100
+        interval = main_ui.sleep_duration_var.get()
 
-        if running:
+        while running:
             find_and_click(image_paths, screen_region)
-            main_ui.root.after(interval, main)
+            time.sleep(interval / 1000.0)  # Convert milliseconds to seconds
 
     except Exception as e:
-        logging.error(f'Exception occurred: {e}')
+        logging.error(f'Exception occurred test: {e}', exc_info=True)
         raise
 
 
 # Initialize UI
-main_ui = Ui(start_script, stop_script, exit_script, add_images)
+main_ui = Ui(start_script, stop_script, add_images)
 
-# TODO Test add hotkey from pyautogui and make it run on another thread
 if __name__ == '__main__':
     logging.info("Starting the application")
     images_folder = './images/ores'
     image_paths = load_images_from_folder(images_folder)
     keyboard.add_hotkey('F7', start_script)
     keyboard.add_hotkey('F8', stop_script)
-    keyboard.add_hotkey('ctrl+alt+c', exit_script)
-    main_ui.root.after(100, main)
+    keyboard.add_hotkey('ctrl+alt+c', main_ui.exit_script)
     logging.info("Press 'F7' to start the script.")
     logging.info("Press 'F8' to pause the script.")
     logging.info("Press 'Ctrl+alt+c' to stop the script.")

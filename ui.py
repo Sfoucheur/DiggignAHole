@@ -1,3 +1,5 @@
+# main_window.py
+
 import tkinter as tk
 from tkinter import ttk
 import logging
@@ -5,6 +7,7 @@ import json
 import os
 import re
 from screeninfo import get_monitors
+from config_window import ConfigWindow  # Import the configuration window class
 
 
 class TkinterLogHandler(logging.Handler):
@@ -37,7 +40,15 @@ class Ui:
 
     CONFIG_FILE = 'config.json'
 
-    def __init__(self, start_script, stop_script, exit_script, add_images_script):
+    def __init__(self, start_script, stop_script, add_images_script):
+        # Initialize variables
+        self.screen_var = tk.StringVar()  # Initialize screen_var
+        self.detection_threshold_var = tk.IntVar()  # Initialize detection_threshold_var
+        self.click_randomness_var = tk.IntVar()  # Initialize click_randomness_var
+        self.gray_scale_enabled = tk.BooleanVar()  # Initialize gray_scale_enabled
+        self.move_duration_var = tk.IntVar()  # Initialize move_duration_var
+        self.sleep_duration_var = tk.IntVar()  # Initialize sleep_duration_var
+
         # Create window
         self.root.title("TunasMaximax")
         self.root.geometry('800x550')  # Increased height
@@ -55,15 +66,9 @@ class Ui:
         self.left_frame.rowconfigure(1, weight=0)  # Row for Stop button
         self.left_frame.rowconfigure(2, weight=0)  # Row for Add Images button
         self.left_frame.rowconfigure(3, weight=0)  # Row for Checkbox
-        # Row for Screen selection dropdown
-        self.left_frame.rowconfigure(4, weight=0)
-        # Row for Detection Threshold
-        self.left_frame.rowconfigure(5, weight=0)
-        self.left_frame.rowconfigure(6, weight=0)  # Row for Click Randomness
-        self.left_frame.rowconfigure(7, weight=0)  # Row for spacing
-        self.left_frame.rowconfigure(8, weight=0)  # Row for Exit button
-        self.left_frame.rowconfigure(9, weight=0)  # Row for Status label
-        self.left_frame.rowconfigure(10, weight=0)  # Row for Status label
+        self.left_frame.rowconfigure(4, weight=0)  # Row for Checkbox
+        self.left_frame.rowconfigure(5, weight=0)  # Row for Checkbox
+        self.left_frame.rowconfigure(6, weight=0)  # Row for Checkbox
 
         self.right_frame = tk.Frame(
             self.root, bg=self.colour1, padx=10, pady=10)
@@ -72,12 +77,7 @@ class Ui:
         self.right_frame.rowconfigure(0, weight=1)
 
         # Create buttons and checkbox
-        self.initButtons(start_script, stop_script,
-                         exit_script, add_images_script)
-        self.initCheckbox()
-        self.initScreenSelect()
-        self.initDetectionThresholdInput()
-        self.initClickRandomnessInput()
+        self.initButtons(start_script, stop_script, add_images_script)
 
         # Create status label
         self.initStatusLabel()
@@ -94,77 +94,9 @@ class Ui:
         # Run exit script on window close
         self.root.protocol("WM_DELETE_WINDOW", self.exit_script)
 
-    def initScreenSelect(self):
-        self.screen_var = tk.StringVar()  # Store the screen description
-
-        # Create a label for the combobox title
-        self.screen_label = tk.Label(
-            self.left_frame,
-            text="Select Screen:",
-            bg=self.colour1,
-            fg=self.colour2,
-            font=self.button_font
-        )
-        self.screen_label.grid(column=0, row=4, pady=5, sticky=tk.W)
-
-        # Create the combobox
-        self.screen_menu = ttk.Combobox(
-            self.left_frame,
-            textvariable=self.screen_var,
-            state='readonly'
-        )
-        self.screen_menu.grid(column=0, row=5, pady=5, sticky=tk.W)
-
-        # Populate screen options
-        self.update_screen_options()
-
-    def initDetectionThresholdInput(self):
-        self.detection_threshold_var = tk.IntVar()
-        self.detection_threshold_label = tk.Label(
-            self.left_frame,
-            text="Detection Threshold:",
-            bg=self.colour1,
-            fg=self.colour2,
-            font=self.button_font
-        )
-        self.detection_threshold_label.grid(
-            column=0, row=6, pady=5, sticky=tk.W)
-
-        self.detection_threshold_entry = tk.Entry(
-            self.left_frame,
-            textvariable=self.detection_threshold_var,
-            validate="key",
-            validatecommand=(self.root.register(
-                self.validate_detection_threshold), '%P')
-        )
-        self.detection_threshold_entry.grid(
-            column=0, row=7, pady=5, sticky=tk.W)
-
-    def initClickRandomnessInput(self):
-        self.click_randomness_var = tk.IntVar()
-        self.click_randomness_label = tk.Label(
-            self.left_frame,
-            text="Click Randomness:",
-            bg=self.colour1,
-            fg=self.colour2,
-            font=self.button_font
-        )
-        self.click_randomness_label.grid(
-            column=0, row=8, pady=5, sticky=tk.W)  # Moved to row 7
-
-        self.click_randomness_entry = tk.Entry(
-            self.left_frame,
-            textvariable=self.click_randomness_var,
-            validate="key",
-            validatecommand=(self.root.register(
-                self.validate_click_randomness), '%P')
-        )
-        self.click_randomness_entry.grid(
-            column=0, row=9, pady=5, sticky=tk.W)  # Moved to row 8
-
-    def createButton(self, text, command):
+    def createButton(self, text, command, parent_frame):
         button = tk.Button(
-            self.left_frame,
+            parent_frame,
             text=text,
             command=command,
             bg=self.button_bg,
@@ -180,42 +112,37 @@ class Ui:
         button.bind("<Leave>", self.on_leave)
         return button
 
-    def initButtons(self, start_script, stop_script, exit_script, add_images_script):
+    def initButtons(self, start_script, stop_script, add_images_script):
         # Start button
-        self.start_button = self.createButton("Start", start_script)
-        self.start_button.grid(column=0, row=0, pady=5, sticky=tk.W)
+        self.start_button = self.createButton(
+            "Start", start_script, self.left_frame)
+        self.start_button.grid(column=0, row=1, pady=5, sticky=tk.W)
 
         # Stop Button
-        self.stop_button = self.createButton("Stop", stop_script)
-        self.stop_button.grid(column=0, row=1, pady=5, sticky=tk.W)
+        self.stop_button = self.createButton(
+            "Stop", stop_script, self.left_frame)
+        self.stop_button.grid(column=0, row=2, pady=5, sticky=tk.W)
 
         # Add Images Button
         self.add_images_button = self.createButton(
-            "Add images", add_images_script)
-        self.add_images_button.grid(column=0, row=2, pady=5, sticky=tk.W)
+            "Add images", add_images_script, self.left_frame)
+        self.add_images_button.grid(column=0, row=3, pady=5, sticky=tk.W)
+
+        # Open Config Button
+        self.config_button = self.createButton(
+            "Configuration", self.open_config_window, self.left_frame)
+        self.config_button.grid(column=0, row=4, pady=5, sticky=tk.W)
 
         # Exit Button
-        self.exit_button = self.createButton("Exit", self.exit_script)
-        self.exit_button.grid(column=0, row=10, pady=5,
+        self.exit_button = self.createButton(
+            "Exit", self.exit_script, self.left_frame)
+        self.exit_button.grid(column=0, row=5, pady=5,
                               sticky=tk.W)  # Moved to row 9
-
-    def initCheckbox(self):
-        self.gray_scale_enabled = tk.BooleanVar()
-        self.checkbox = tk.Checkbutton(
-            self.left_frame,
-            text="Enable GrayScale",
-            variable=self.gray_scale_enabled,
-            bg=self.colour1,
-            fg=self.colour2,
-            font=self.button_font,
-            relief='flat'
-        )
-        self.checkbox.grid(column=0, row=3, pady=5, sticky=tk.W)
 
     def initStatusLabel(self):
         self.status_label = tk.Label(
-            self.left_frame, text="Status: Stopped", bg=self.colour1, fg=self.colour2)
-        self.status_label.grid(column=0, row=11, pady=10,
+            self.left_frame, text="Status: Stopped", bg=self.colour1, fg=self.colour2, font=self.button_font)
+        self.status_label.grid(column=0, row=6, pady=10,
                                sticky=tk.W)  # Moved to row 10
 
     def initLogArea(self):
@@ -252,16 +179,6 @@ class Ui:
     def on_enter(self, event):
         event.widget.configure(bg=self.button_hover_bg)
 
-    def update_screen_options(self):
-        screens = get_monitors()
-        screen_options = [f"Screen {
-            i + 1} ({screen.width}x{screen.height})" for i, screen in enumerate(screens)]
-        self.screen_menu['values'] = screen_options
-
-        # Set default value to the first screen
-        if screens:
-            self.screen_var.set(screen_options[0])
-
     def getScreenVar(self):
         pattern = r"Screen (\d+)"
         match = re.search(pattern, self.screen_var.get())
@@ -283,39 +200,19 @@ class Ui:
                         config['detection_threshold'])
                 if 'click_randomness' in config:
                     self.click_randomness_var.set(config['click_randomness'])
+                if 'move_duration' in config:
+                    self.move_duration_var.set(config['move_duration'])
+                if 'sleep_duration' in config:
+                    self.sleep_duration_var.set(config['sleep_duration'])
 
-    def save_configuration(self):
-        selected_screen = self.screen_var.get()
-        config = {
-            'selected_screen': selected_screen,
-            'grays_scale_state': self.gray_scale_enabled.get(),
-            'detection_threshold': self.detection_threshold_var.get(),
-            'click_randomness': self.click_randomness_var.get()
-        }
+    def save_configuration(self, config):
         with open(self.CONFIG_FILE, 'w') as file:
             json.dump(config, file)
+        self.load_configuration()
 
-    def validate_detection_threshold(self, value):
-        try:
-            value = int(value)
-            if 0 <= value <= 100:
-                self.detection_threshold_var.set(value)
-                return True
-        except ValueError:
-            pass
-        return False
-
-    def validate_click_randomness(self, value):
-        try:
-            value = int(value)
-            if value >= 0:
-                self.click_randomness_var.set(value)
-                return True
-        except ValueError:
-            pass
-        return False
+    def open_config_window(self):
+        ConfigWindow(self.root, self)  # Open the configuration window
 
     def exit_script(self):
-        self.save_configuration()
         logging.info('Exiting program!')
         self.root.quit()
