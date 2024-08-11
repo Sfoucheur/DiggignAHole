@@ -90,14 +90,8 @@ class ConfigWindow:
         self.detection_threshold_label.grid(
             row=1, column=0, pady=5, sticky=tk.W)
 
-        # Register the validate command
-        vcmd = self.window.register(self.validate_detection_threshold)
-        self.detection_threshold_entry = tk.Entry(
-            self.main_frame,
-            textvariable=self.detection_threshold_var,
-            validate="key",
-            validatecommand=(vcmd, '%P')
-        )
+        self.detection_threshold_entry = tk.Spinbox(
+            self.main_frame, from_=0, to=100, increment=1, textvariable=self.detection_threshold_var, state='readonly')
         self.detection_threshold_entry.grid(
             row=1, column=1, pady=5, sticky=tk.W)
 
@@ -111,14 +105,8 @@ class ConfigWindow:
         )
         self.click_randomness_label.grid(row=2, column=0, pady=5, sticky=tk.W)
 
-        # Register the validate command
-        vcmd = self.window.register(self.validate_click_randomness)
-        self.click_randomness_entry = tk.Entry(
-            self.main_frame,
-            textvariable=self.click_randomness_var,
-            validate="key",
-            validatecommand=(vcmd, '%P')
-        )
+        self.click_randomness_entry = tk.Spinbox(
+            self.main_frame, from_=0, to=50, increment=1, textvariable=self.click_randomness_var, state='readonly')
         self.click_randomness_entry.grid(row=2, column=1, pady=5, sticky=tk.W)
 
     def initMoveDurationInput(self):
@@ -132,14 +120,8 @@ class ConfigWindow:
         self.move_duration_label.grid(
             row=3, column=0, pady=5, sticky=tk.W)
 
-        # Register the validate command
-        vcmd = self.window.register(self.validate_move_duration)
-        self.move_duration_entry = tk.Entry(
-            self.main_frame,
-            textvariable=self.move_duration_var,
-            validate="key",
-            validatecommand=(vcmd, '%P')
-        )
+        self.move_duration_entry = tk.Spinbox(
+            self.main_frame, from_=1, to=9, increment=1, textvariable=self.move_duration_var, state='readonly')
         self.move_duration_entry.grid(
             row=3, column=1, pady=5, sticky=tk.W)
 
@@ -154,14 +136,8 @@ class ConfigWindow:
         self.sleep_duration_label.grid(
             row=4, column=0, pady=5, sticky=tk.W)
 
-        # Register the validate command
-        vcmd = self.window.register(self.validate_sleep_duration)
-        self.sleep_duration_entry = tk.Entry(
-            self.main_frame,
-            textvariable=self.sleep_duration_var,
-            validate="key",
-            validatecommand=(vcmd, '%P')
-        )
+        self.sleep_duration_entry = tk.Spinbox(
+            self.main_frame, from_=100, to=5000, increment=100, textvariable=self.sleep_duration_var, state='readonly')
         self.sleep_duration_entry.grid(
             row=4, column=1, pady=5, sticky=tk.W)
 
@@ -186,42 +162,6 @@ class ConfigWindow:
         # Set default value to the first screen
         if screens:
             self.ui_instance.screen_var.set(screen_options[0])
-
-    def validate_detection_threshold(self, value):
-        try:
-            value = int(value)
-            if 0 <= value <= 100:
-                return True
-        except ValueError:
-            pass
-        return False
-
-    def validate_click_randomness(self, value):
-        try:
-            value = int(value)
-            if value >= 0:
-                return True
-        except ValueError:
-            pass
-        return False
-
-    def validate_move_duration(self, value):
-        try:
-            value = int(value)
-            if 0 <= value <= 9:
-                return True
-        except ValueError:
-            pass
-        return False
-
-    def validate_sleep_duration(self, value):
-        try:
-            value = int(value)
-            if value >= 100:
-                return True
-        except ValueError:
-            pass
-        return False
 
     def save_configuration(self):
         config = {
