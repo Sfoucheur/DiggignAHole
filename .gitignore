@@ -1,0 +1,4 @@
+dofusenv
+*.log
+build
+__pycache__
