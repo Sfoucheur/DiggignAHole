@@ -7,6 +7,7 @@ config = './config.json'
 
 build_exe_options = {
     'include_files': [assets_folder, config],
+    "optimize": 2
 }
 
 setup(
@@ -14,5 +15,5 @@ setup(
     version="1.0",
     description="Collect everything",
     options={'build_exe': build_exe_options},
-    executables=[Executable("main.py")]
+    executables=[Executable("./src/main.py")]
 )

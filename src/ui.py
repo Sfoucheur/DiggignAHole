@@ -1,13 +1,19 @@
 # main_window.py
 
+from pathlib import Path
 import tkinter as tk
-from tkinter import ttk
 import logging
 import json
 import os
 import re
 from screeninfo import get_monitors
-from config_window import ConfigWindow  # Import the configuration window class
+from config_window import ConfigWindow
+# Import the configuration window class
+from select_window import FolderSelectorApp
+
+script_dir = Path(__file__).resolve().parent
+relative_config_path = '../config.json'
+config_path = (script_dir / relative_config_path).resolve()
 
 
 class TkinterLogHandler(logging.Handler):
@@ -37,8 +43,6 @@ class Ui:
     button_hover_bg = '#65e7ff'
     button_border_width = 1
     button_font = ('Arial', 10, 'bold')
-
-    CONFIG_FILE = 'config.json'
 
     def __init__(self, start_script, stop_script, add_images_script):
         # Initialize variables
@@ -123,26 +127,31 @@ class Ui:
             "Stop", stop_script, self.left_frame)
         self.stop_button.grid(column=0, row=2, pady=5, sticky=tk.W)
 
+        # Open Select Folder Button
+        self.select_button = self.createButton(
+            "Select images", self.open_select_window, self.left_frame)
+        self.select_button.grid(column=0, row=3, pady=5, sticky=tk.W)
+
         # Add Images Button
         self.add_images_button = self.createButton(
             "Add images", add_images_script, self.left_frame)
-        self.add_images_button.grid(column=0, row=3, pady=5, sticky=tk.W)
+        self.add_images_button.grid(column=0, row=4, pady=5, sticky=tk.W)
 
         # Open Config Button
         self.config_button = self.createButton(
             "Configuration", self.open_config_window, self.left_frame)
-        self.config_button.grid(column=0, row=4, pady=5, sticky=tk.W)
+        self.config_button.grid(column=0, row=5, pady=5, sticky=tk.W)
 
         # Exit Button
         self.exit_button = self.createButton(
             "Exit", self.exit_script, self.left_frame)
-        self.exit_button.grid(column=0, row=5, pady=5,
+        self.exit_button.grid(column=0, row=6, pady=5,
                               sticky=tk.W)  # Moved to row 9
 
     def initStatusLabel(self):
         self.status_label = tk.Label(
             self.left_frame, text="Status: Stopped", bg=self.colour1, fg=self.colour2, font=self.button_font)
-        self.status_label.grid(column=0, row=6, pady=10,
+        self.status_label.grid(column=0, row=7, pady=10,
                                sticky=tk.W)  # Moved to row 10
 
     def initLogArea(self):
@@ -185,11 +194,10 @@ class Ui:
         return int(match.group(1)) - 1
 
     def load_configuration(self):
-        if os.path.exists(self.CONFIG_FILE):
-            with open(self.CONFIG_FILE, 'r') as file:
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as file:
                 config = json.load(file)
                 # Load screen selection and checkbox state
-
                 if 'grays_scale_state' in config:
                     self.gray_scale_enabled.set(config['grays_scale_state'])
                 if 'detection_threshold' in config:
@@ -221,12 +229,15 @@ class Ui:
                         self.screen_var.set(screen_options[0])
 
     def save_configuration(self, config):
-        with open(self.CONFIG_FILE, 'w') as file:
+        with open(config_path, 'w') as file:
             json.dump(config, file)
         self.load_configuration()
 
     def open_config_window(self):
         ConfigWindow(self.root, self)  # Open the configuration window
+
+    def open_select_window(self):
+        FolderSelectorApp(self.root, self)  # Open the select folder window
 
     def exit_script(self):
         logging.info('Exiting program!')

@@ -14,7 +14,7 @@ from ui import Ui
 import shutil
 from PIL import Image  # Import PIL for image handling
 import threading  # Import threading
-import os
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
@@ -31,6 +31,11 @@ logging.getLogger('PIL').setLevel(logging.ERROR)
 pyautogui.MINIMUM_DURATION = 0
 pyautogui.MINIMUM_SLEEP = 0
 pyautogui.PAUSE = 0
+
+
+script_dir = Path(__file__).resolve().parent
+relative_images_folder_path = '../images'
+images_folder = (script_dir / relative_images_folder_path).resolve()
 
 
 def point_dist(x1, y1, x2, y2):
@@ -118,12 +123,11 @@ def load_images_from_folder(folder):
 
 
 def add_images():
-    global image_paths
-    target_folder = './images/ores'
+    global images_list
 
     # Ensure the target folder exists
-    if not os.path.exists(target_folder):
-        os.makedirs(target_folder)
+    if not os.path.exists(images_folder):
+        os.makedirs(images_folder)
 
     file_paths = filedialog.askopenfilenames(
         filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.gif")]
@@ -132,14 +136,14 @@ def add_images():
         for file_path in file_paths:
             # Define the target path
             filename = os.path.basename(file_path)
-            target_path = os.path.join(target_folder, filename)
+            target_path = os.path.join(images_folder, filename)
 
             # Check if the file already exists in the target folder
             if not os.path.exists(target_path):
                 # Copy the file to the target folder
                 shutil.copy(file_path, target_path)
                 # Load the image and add it to the image_paths list
-                image_paths.append(Image.open(target_path))
+                images_list.append(Image.open(target_path))
                 logging.info(f"Added image: {target_path}")
             else:
                 logging.info(f"Image already exists: {target_path}")
@@ -180,14 +184,14 @@ thread = None
 
 def main():
     global running
-    global image_paths
+    global images_list
     try:
         screen_index = main_ui.getScreenVar()  # Get the selected screen index
         screen_region = get_screen_region(screen_index)
         interval = main_ui.sleep_duration_var.get()
 
         while running:
-            find_and_click(image_paths, screen_region)
+            find_and_click(images_list, screen_region)
             time.sleep(interval / 1000.0)  # Convert milliseconds to seconds
 
     except Exception as e:
@@ -200,8 +204,7 @@ main_ui = Ui(start_script, stop_script, add_images)
 
 if __name__ == '__main__':
     logging.info("Starting the application")
-    images_folder = './images/ores'
-    image_paths = load_images_from_folder(images_folder)
+    images_list = load_images_from_folder(images_folder)
     keyboard.add_hotkey('F7', start_script)
     keyboard.add_hotkey('F8', stop_script)
     keyboard.add_hotkey('ctrl+alt+c', main_ui.exit_script)

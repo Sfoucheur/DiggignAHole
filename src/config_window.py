@@ -11,6 +11,7 @@ class ConfigWindow:
         self.parent = parent
         self.ui_instance = ui_instance
         self.window = tk.Toplevel(parent)
+        self.window.grab_set()
         self.window.title("Configuration")
         self.window.geometry('400x300')
         self.window.resizable(width=False, height=False)
@@ -58,6 +59,11 @@ class ConfigWindow:
             height=2
         )
         save_button.grid(row=6, column=0, columnspan=2, pady=10, sticky=tk.EW)
+        self.window.protocol("WM_DELETE_WINDOW", self.exit_script)
+
+    def exit_script(self):
+        self.window.destroy()
+        self.window.grab_release()
 
     def create_frames(self):
         """ Create frames for organizing configuration elements. """

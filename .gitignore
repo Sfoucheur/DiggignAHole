@@ -1,4 +1,5 @@
 dofusenv
+envtest
 *.log
 build
 __pycache__
