@@ -14,7 +14,9 @@ from PIL import Image, ImageTk
 
 
 def get_assets_directory():
-    return os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "assets"))
+    return os.path.abspath(
+        os.path.join(os.path.dirname(os.path.realpath(__file__)), "assets")
+    )
 
 
 # These three checkbox icons were isolated from
@@ -45,22 +47,29 @@ class CheckboxTreeview(ttk.Treeview):
         ttk.Treeview.__init__(self, master, **kw)
         # style (make a noticeable disabled style)
         style = ttk.Style(self)
-        style.map("Checkbox.Treeview",
-                  fieldbackground=[("disabled", '#E6E6E6')],
-                  foreground=[("disabled", 'gray40')],
-                  background=[("disabled", '#E6E6E6')])
+        style.map(
+            "Checkbox.Treeview",
+            fieldbackground=[("disabled", "#E6E6E6")],
+            foreground=[("disabled", "gray40")],
+            background=[("disabled", "#E6E6E6")],
+        )
         # checkboxes are implemented with pictures
-        self.im_checked = ImageTk.PhotoImage(
-            Image.open(IM_CHECKED), master=self)
-        self.im_unchecked = ImageTk.PhotoImage(
-            Image.open(IM_UNCHECKED), master=self)
-        self.im_tristate = ImageTk.PhotoImage(
-            Image.open(IM_TRISTATE), master=self)
+        self.im_checked = ImageTk.PhotoImage(Image.open(IM_CHECKED), master=self)
+        self.im_unchecked = ImageTk.PhotoImage(Image.open(IM_UNCHECKED), master=self)
+        self.im_tristate = ImageTk.PhotoImage(Image.open(IM_TRISTATE), master=self)
         self.tag_configure("unchecked", image=self.im_unchecked)
         self.tag_configure("tristate", image=self.im_tristate)
         self.tag_configure("checked", image=self.im_checked)
+        self.on_checked = None
+        self.checked_nodes = None
         # check / uncheck boxes on click
         self.bind("<Button-1>", self._box_click, True)
+
+    def setOnCheck(self, callback):
+        self.on_checked = callback
+
+    def set_checked_nodes(self, callback):
+        self.checked_nodes = callback()
 
     def _expand_collapse_all(self, open):
         """Expand or collapse all items."""
@@ -71,6 +80,7 @@ class CheckboxTreeview(ttk.Treeview):
             children = self.get_children(item)
             for c in children:
                 aux(c)
+
         aux("")
 
     def expand_all(self):
@@ -94,6 +104,8 @@ class CheckboxTreeview(ttk.Treeview):
                 aux(c)
 
         aux("")
+        if self.on_checked is not None:
+            self.on_checked(self.get_checked())
 
     def check_all(self):
         """Check all items."""
@@ -109,15 +121,15 @@ class CheckboxTreeview(ttk.Treeview):
         """
         Modify or inquire widget state.
 
-        :param statespec: Widget state is returned if `statespec` is None, 
-                          otherwise it is set according to the statespec 
-                          flags and then a new state spec is returned 
+        :param statespec: Widget state is returned if `statespec` is None,
+                          otherwise it is set according to the statespec
+                          flags and then a new state spec is returned
                           indicating which flags were changed.
         :type statespec: None or sequence[str]
         """
         if statespec:
             if "disabled" in statespec:
-                self.bind('<Button-1>', lambda e: 'break')
+                self.bind("<Button-1>", lambda e: "break")
             elif "!disabled" in statespec:
                 self.unbind("<Button-1>")
                 self.bind("<Button-1>", self._box_click, True)
@@ -133,7 +145,7 @@ class CheckboxTreeview(ttk.Treeview):
 
         :param item: item id
         :type item: str
-        :param state: "checked", "unchecked" or "tristate": new state of the item 
+        :param state: "checked", "unchecked" or "tristate": new state of the item
         :type state: str
         """
         tags = self.item(item, "tags")
@@ -183,19 +195,22 @@ class CheckboxTreeview(ttk.Treeview):
         :return: the item identifier of the newly created item
         :rtype: str
 
-        .. note:: Same method as for the standard :class:`ttk.Treeview` but 
-                  add the tag for the box state accordingly to the parent 
-                  state if no tag among 
+        .. note:: Same method as for the standard :class:`ttk.Treeview` but
+                  add the tag for the box state accordingly to the parent
+                  state if no tag among
                   ('checked', 'unchecked', 'tristate') is given.
         """
         if self.tag_has("checked", parent):
             tag = "checked"
         else:
-            tag = 'unchecked'
+            tag = "unchecked"
         if "tags" not in kw:
             kw["tags"] = (tag,)
-        elif not ("unchecked" in kw["tags"] or "checked" in kw["tags"] or
-                  "tristate" in kw["tags"]):
+        elif not (
+            "unchecked" in kw["tags"]
+            or "checked" in kw["tags"]
+            or "tristate" in kw["tags"]
+        ):
             kw["tags"] += (tag,)
 
         return ttk.Treeview.insert(self, parent, index, iid, **kw)
@@ -219,11 +234,27 @@ class CheckboxTreeview(ttk.Treeview):
         return checked
 
     def _check_descendant(self, item):
-        """Check the boxes of item's descendants."""
+        lastD = set()
+
         children = self.get_children(item)
+
+        if len(children) == 0:
+            # It's a leaf node
+            if self.tag_has("unchecked", item):
+                lastD.add(item)
+
         for iid in children:
+            if len(self.get_children(iid)) == 0:
+                # It's a leaf node
+                if self.tag_has("unchecked", iid):
+                    lastD.add(iid)
+            # Change state to checked
             self.change_state(iid, "checked")
-            self._check_descendant(iid)
+            # Recursive call to process children
+
+            lastD.update(self._check_descendant(iid))
+
+        return lastD
 
     def _check_ancestor(self, item):
         """
@@ -253,11 +284,25 @@ class CheckboxTreeview(ttk.Treeview):
             self._tristate_parent(parent)
 
     def _uncheck_descendant(self, item):
-        """Uncheck the boxes of item's descendant."""
+        lastD = set()
         children = self.get_children(item)
+
+        if len(children) == 0:
+            # It's a leaf node
+            if self.tag_has("checked", item):
+                lastD.add(item)
+
         for iid in children:
+            if len(self.get_children(iid)) == 0:
+                # It's a leaf node
+                if self.tag_has("checked", iid):
+                    lastD.add(iid)
+            # Change state to checked
             self.change_state(iid, "unchecked")
-            self._uncheck_descendant(iid)
+            # Recursive call to process children
+            lastD.update(self._uncheck_descendant(iid))
+
+        return lastD
 
     def _uncheck_ancestor(self, item):
         """
@@ -280,12 +325,23 @@ class CheckboxTreeview(ttk.Treeview):
         """Check or uncheck box when clicked."""
         x, y, widget = event.x, event.y, event.widget
         elem = widget.identify("element", x, y)
+
         if "image" in elem:
             # a box was clicked
             item = self.identify_row(y)
             if self.tag_has("unchecked", item) or self.tag_has("tristate", item):
+                # Check descendant items and update their state
+                checked_items = self._check_descendant(item)
                 self._check_ancestor(item)
-                self._check_descendant(item)
+
+                # Call the on_checked callback with the list of checked leaf nodes
+                if self.on_checked is not None:
+                    self.on_checked(list(checked_items), True)
             else:
-                self._uncheck_descendant(item)
+                # Uncheck descendant items and update their state
+                checked_items = self._uncheck_descendant(item)
                 self._uncheck_ancestor(item)
+
+                # Call the on_checked callback with the list of unchecked leaf nodes
+                if self.on_checked is not None:
+                    self.on_checked(list(checked_items), False)

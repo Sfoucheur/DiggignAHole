@@ -8,12 +8,15 @@ import os
 import re
 from screeninfo import get_monitors
 from config_window import ConfigWindow
-# Import the configuration window class
+from PIL import Image
 from select_window import FolderSelectorApp
 
 script_dir = Path(__file__).resolve().parent
-relative_config_path = '../config.json'
+relative_config_path = "../config.json"
 config_path = (script_dir / relative_config_path).resolve()
+
+relative_images_folder_path = "../images"
+images_folder = (script_dir / relative_images_folder_path).resolve()
 
 
 class TkinterLogHandler(logging.Handler):
@@ -25,7 +28,7 @@ class TkinterLogHandler(logging.Handler):
         try:
             msg = self.format(record)
             self.text_widget.configure(state=tk.NORMAL)
-            self.text_widget.insert(tk.END, msg + '\n')
+            self.text_widget.insert(tk.END, msg + "\n")
             self.text_widget.yview(tk.END)  # Scroll to the end
             self.text_widget.configure(state=tk.DISABLED)
         except Exception:
@@ -34,17 +37,17 @@ class TkinterLogHandler(logging.Handler):
 
 class Ui:
     root = tk.Tk()
-    colour1 = '#020f12'  # Window background color
-    colour2 = '#05d7ff'
-    colour3 = '#65e7ff'
-    colour4 = 'BLACK'
-    button_bg = '#05d7ff'
-    button_fg = '#020f12'
-    button_hover_bg = '#65e7ff'
+    colour1 = "#020f12"  # Window background color
+    colour2 = "#05d7ff"
+    colour3 = "#65e7ff"
+    colour4 = "BLACK"
+    button_bg = "#05d7ff"
+    button_fg = "#020f12"
+    button_hover_bg = "#65e7ff"
     button_border_width = 1
-    button_font = ('Arial', 10, 'bold')
+    button_font = ("Arial", 10, "bold")
 
-    def __init__(self, start_script, stop_script, add_images_script):
+    def __init__(self, start_script, stop_script, open_images_folder):
         # Initialize variables
         self.screen_var = tk.StringVar()  # Initialize screen_var
         self.detection_threshold_var = tk.IntVar()  # Initialize detection_threshold_var
@@ -55,15 +58,14 @@ class Ui:
 
         # Create window
         self.root.title("TunasMaximax")
-        self.root.geometry('800x550')  # Increased height
+        self.root.geometry("800x550")  # Increased height
         self.root.resizable(width=False, height=False)
 
         # Set the background color of the window
         self.root.configure(bg=self.colour1)
 
         # Create frames
-        self.left_frame = tk.Frame(
-            self.root, bg=self.colour1, padx=10, pady=10)
+        self.left_frame = tk.Frame(self.root, bg=self.colour1, padx=10, pady=10)
         self.left_frame.grid(row=0, column=0, sticky=tk.NS, padx=(10, 0))
         self.left_frame.columnconfigure(0, weight=1)
         self.left_frame.rowconfigure(0, weight=0)  # Row for Start button
@@ -74,14 +76,13 @@ class Ui:
         self.left_frame.rowconfigure(5, weight=0)  # Row for Checkbox
         self.left_frame.rowconfigure(6, weight=0)  # Row for Checkbox
 
-        self.right_frame = tk.Frame(
-            self.root, bg=self.colour1, padx=10, pady=10)
+        self.right_frame = tk.Frame(self.root, bg=self.colour1, padx=10, pady=10)
         self.right_frame.grid(row=0, column=1, sticky=tk.NSEW)
         self.right_frame.columnconfigure(0, weight=1)
         self.right_frame.rowconfigure(0, weight=1)
 
         # Create buttons and checkbox
-        self.initButtons(start_script, stop_script, add_images_script)
+        self.initButtons(start_script, stop_script, open_images_folder)
 
         # Create status label
         self.initStatusLabel()
@@ -106,58 +107,70 @@ class Ui:
             bg=self.button_bg,
             fg=self.button_fg,
             font=self.button_font,
-            relief='flat',
+            relief="flat",
             borderwidth=self.button_border_width,
             width=20,
             height=2,
-            highlightthickness=0
+            highlightthickness=0,
         )
         button.bind("<Enter>", self.on_enter)
         button.bind("<Leave>", self.on_leave)
         return button
 
-    def initButtons(self, start_script, stop_script, add_images_script):
+    def initButtons(self, start_script, stop_script, open_images_folder):
         # Start button
-        self.start_button = self.createButton(
-            "Start", start_script, self.left_frame)
+        self.start_button = self.createButton("Start", start_script, self.left_frame)
         self.start_button.grid(column=0, row=1, pady=5, sticky=tk.W)
 
         # Stop Button
-        self.stop_button = self.createButton(
-            "Stop", stop_script, self.left_frame)
+        self.stop_button = self.createButton("Stop", stop_script, self.left_frame)
         self.stop_button.grid(column=0, row=2, pady=5, sticky=tk.W)
 
         # Open Select Folder Button
         self.select_button = self.createButton(
-            "Select images", self.open_select_window, self.left_frame)
+            "Select images", self.open_select_window, self.left_frame
+        )
         self.select_button.grid(column=0, row=3, pady=5, sticky=tk.W)
 
         # Add Images Button
         self.add_images_button = self.createButton(
-            "Add images", add_images_script, self.left_frame)
+            "Open images", open_images_folder, self.left_frame
+        )
         self.add_images_button.grid(column=0, row=4, pady=5, sticky=tk.W)
 
         # Open Config Button
         self.config_button = self.createButton(
-            "Configuration", self.open_config_window, self.left_frame)
+            "Configuration", self.open_config_window, self.left_frame
+        )
         self.config_button.grid(column=0, row=5, pady=5, sticky=tk.W)
 
         # Exit Button
-        self.exit_button = self.createButton(
-            "Exit", self.exit_script, self.left_frame)
-        self.exit_button.grid(column=0, row=6, pady=5,
-                              sticky=tk.W)  # Moved to row 9
+        self.exit_button = self.createButton("Exit", self.exit_script, self.left_frame)
+        self.exit_button.grid(column=0, row=6, pady=5, sticky=tk.W)  # Moved to row 9
 
     def initStatusLabel(self):
         self.status_label = tk.Label(
-            self.left_frame, text="Status: Stopped", bg=self.colour1, fg=self.colour2, font=self.button_font)
-        self.status_label.grid(column=0, row=7, pady=10,
-                               sticky=tk.W)  # Moved to row 10
+            self.left_frame,
+            text="Status: Stopped",
+            bg=self.colour1,
+            fg=self.colour2,
+            font=self.button_font,
+        )
+        self.status_label.grid(column=0, row=7, pady=10, sticky=tk.W)  # Moved to row 10
 
     def initLogArea(self):
         # Create a Text widget
         self.log_area = tk.Text(
-            self.right_frame, wrap=tk.WORD, height=30, width=75, background=self.colour1, foreground=self.colour2, selectbackground=self.colour3, selectforeground=self.colour4, blockcursor=True, borderwidth=0
+            self.right_frame,
+            wrap=tk.WORD,
+            height=30,
+            width=75,
+            background=self.colour1,
+            foreground=self.colour2,
+            selectbackground=self.colour3,
+            selectforeground=self.colour4,
+            blockcursor=True,
+            borderwidth=0,
         )
         self.log_area.grid(column=0, row=0, pady=10, sticky=tk.W)
 
@@ -169,8 +182,7 @@ class Ui:
         handler = TkinterLogHandler(self.log_area)
         # Set the level to capture all messages
         handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter(
-            '%(asctime)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
         handler.setFormatter(formatter)
 
         # Add the custom handler to the root logger
@@ -179,7 +191,7 @@ class Ui:
         logger.addHandler(handler)
 
     def on_mouse_wheel(self, event):
-        self.log_area.yview_scroll(int(-1*(event.delta/120)), "units")
+        self.log_area.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
     # Buttons hover animations
     def on_leave(self, event):
@@ -193,45 +205,76 @@ class Ui:
         match = re.search(pattern, self.screen_var.get())
         return int(match.group(1)) - 1
 
-    def load_configuration(self):
-        if os.path.exists(config_path):
-            with open(config_path, 'r') as file:
-                config = json.load(file)
-                # Load screen selection and checkbox state
-                if 'grays_scale_state' in config:
-                    self.gray_scale_enabled.set(config['grays_scale_state'])
-                if 'detection_threshold' in config:
-                    self.detection_threshold_var.set(
-                        config['detection_threshold'])
-                if 'click_randomness' in config:
-                    self.click_randomness_var.set(config['click_randomness'])
-                if 'move_duration' in config:
-                    self.move_duration_var.set(config['move_duration'])
-                if 'sleep_duration' in config:
-                    self.sleep_duration_var.set(config['sleep_duration'])
-                if 'selected_screen' in config:
-                    selected_screen = config['selected_screen']
-                    if selected_screen:
-                        self.screen_var.set(selected_screen)
-                    else:
-                        monitors = get_monitors()
-                        screen_options = [f"Screen {
-                            i + 1} ({screen.width}x{screen.height})" for i, screen in enumerate(monitors)]
-                        config = {
-                            'selected_screen': screen_options[0],
-                            'grays_scale_state': self.gray_scale_enabled.get(),
-                            'detection_threshold': self.detection_threshold_var.get(),
-                            'click_randomness': self.click_randomness_var.get(),
-                            "move_duration": self.move_duration_var.get(),
-                            "sleep_duration": self.sleep_duration_var.get()
-                        }
-                        self.save_configuration(config)
-                        self.screen_var.set(screen_options[0])
+    def load_images_from_folders(self, folders):
+        config_images_list = self.config["selected_images"]
+        images = []
+        for folder in folders:
+            base_folder_path = os.path.join(images_folder, folder)
+            if os.path.exists(base_folder_path):
+                for filename in os.listdir(base_folder_path):
+                    img_path = os.path.join(base_folder_path, filename)
+                    if os.path.isfile(img_path) and filename.lower().endswith(
+                        (".png", ".jpg", ".jpeg", ".bmp", ".gif")
+                    ):
+                        # Open the image and append the PIL Image object to the list
+                        logging.info(f"Load {re.sub(r"^.*images\\", "", img_path)}")
+                        images.append(Image.open(img_path))
+            else:
+                config_images_list.remove(folder)
+        self.save_configuration({"selected_images": config_images_list}, False)
+        return images
 
-    def save_configuration(self, config):
-        with open(config_path, 'w') as file:
-            json.dump(config, file)
-        self.load_configuration()
+    def load_configuration(self):
+        self.get_config()
+        # Load screen selection and checkbox state
+        if "grays_scale_state" in self.config:
+            self.gray_scale_enabled.set(self.config["grays_scale_state"])
+        if "detection_threshold" in self.config:
+            self.detection_threshold_var.set(self.config["detection_threshold"])
+        if "click_randomness" in self.config:
+            self.click_randomness_var.set(self.config["click_randomness"])
+        if "move_duration" in self.config:
+            self.move_duration_var.set(self.config["move_duration"])
+        if "sleep_duration" in self.config:
+            self.sleep_duration_var.set(self.config["sleep_duration"])
+        if "selected_images" in self.config:
+            self.selected_images = self.config["selected_images"]
+            logging.info("-----Start Images Loading-----")
+            self.loaded_images = self.load_images_from_folders(
+                self.config["selected_images"]
+            )
+            if len(self.loaded_images) == 0:
+                logging.info("No images to be loaded !")
+            logging.info("-----Stop Images Loading-----")
+        if "selected_screen" in self.config:
+            selected_screen = self.config["selected_screen"]
+            if selected_screen:
+                self.screen_var.set(selected_screen)
+            else:
+                monitors = get_monitors()
+                screen_options = [
+                    f"Screen {
+                    i + 1} ({screen.width}x{screen.height})"
+                    for i, screen in enumerate(monitors)
+                ]
+                config = {"selected_screen": screen_options[0]}
+                self.save_configuration(config)
+                self.screen_var.set(screen_options[0])
+
+    def save_configuration(self, config, load=True):
+        new_config = {**self.config, **config}
+        with open(config_path, "w") as file:
+            json.dump(new_config, file)
+            self.config = new_config
+        if load:
+            self.load_configuration()
+
+    def get_config(self):
+        if os.path.exists(config_path):
+            with open(config_path, "r") as file:
+                config = json.load(file)
+                self.config = config
+                return config
 
     def open_config_window(self):
         ConfigWindow(self.root, self)  # Open the configuration window
@@ -240,5 +283,5 @@ class Ui:
         FolderSelectorApp(self.root, self)  # Open the select folder window
 
     def exit_script(self):
-        logging.info('Exiting program!')
+        logging.info("Exiting program!")
         self.root.quit()
