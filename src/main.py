@@ -43,7 +43,7 @@ def moveBezier(center_x, center_y):
     OFFSET_RANGE = main_ui.click_randomness_var.get()
     center_x += random.randint(-OFFSET_RANGE, OFFSET_RANGE)
     center_y += random.randint(-OFFSET_RANGE, OFFSET_RANGE)
-    cp = random.randint(3, 5)
+    cp = random.randint(6, 15)
     x1, y1 = pyautogui.position()
     x = np.linspace(x1, center_x, num=cp, dtype="int")
     y = np.linspace(y1, center_y, num=cp, dtype="int")
@@ -59,8 +59,10 @@ def moveBezier(center_x, center_y):
         0, 1, num=2 + int(point_dist(x1, y1, center_x, center_y) / 50.0)
     )
     points = interpolate.splev(u_fine, tck)
-    duration = main_ui.move_duration_var.get() / 10
-    timeout = duration / len(points[0])
+    duration = main_ui.move_duration_var.get()
+    timeout = duration
+    if duration != 0:
+        timeout = duration / 1000.0
     point_list = zip(*(i.astype(int) for i in points))
     for point in point_list:
         pyautogui.moveTo(*point)
