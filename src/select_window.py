@@ -3,7 +3,6 @@ from tkinter import ttk
 import os
 import functools
 from customWidgets.checkbox_treeview import CheckboxTreeview
-import logging
 
 script_dir = os.getcwd()
 relative_images_folder_path = "assets/images"
