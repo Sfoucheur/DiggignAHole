@@ -1,19 +1,20 @@
 from cx_Freeze import setup, Executable
+import sys
+import os
 
 # Define the path to the folder you want to include
-assets_folder = './images'
-config = './config.json'
-
 
 build_exe_options = {
-    'include_files': [assets_folder, config],
-    "optimize": 2
+    "build_exe": "build/kamsoutrax",
+    "optimize": 2,
 }
+
+sys.path.append(os.path.realpath(sys.path[0] + "\\src"))
 
 setup(
     name="Kamas",
     version="1.0",
     description="Collect everything",
-    options={'build_exe': build_exe_options},
-    executables=[Executable("./src/main.py")]
+    options={"build_exe": build_exe_options},
+    executables=[Executable("src/main.py")],
 )

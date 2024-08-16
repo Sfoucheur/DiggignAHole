@@ -13,7 +13,7 @@ from screeninfo import get_monitors
 from ui import Ui
 from PIL import Image  # Import PIL for image handling
 import threading  # Import threading
-from pathlib import Path
+import sys
 
 # Configure logging
 logging.basicConfig(
@@ -30,9 +30,10 @@ pyautogui.MINIMUM_SLEEP = 0
 pyautogui.PAUSE = 0
 
 
-script_dir = Path(__file__).resolve().parent
-relative_images_folder_path = "../images"
-images_folder = (script_dir / relative_images_folder_path).resolve()
+script_dir = os.getcwd()
+relative_images_folder_path = "assets/images"
+images_folder_relative = os.path.join(script_dir, relative_images_folder_path)
+images_folder = os.path.abspath(images_folder_relative)
 
 
 def point_dist(x1, y1, x2, y2):
@@ -116,11 +117,17 @@ def find_and_click(images: List[Image.Image], screen_region):
 
 
 def open_folder():
-    """Open the specified folder in Windows Explorer."""
-    if os.path.isdir(images_folder):
-        subprocess.run(["explorer", images_folder], check=True)
-    else:
-        logging.error(f"The path {images_folder} does not exist or is not a directory.")
+    # explorer would choke on forward slashes
+    base_dir = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    path = os.path.join(base_dir, "assets", "images")
+    path = os.path.normpath(images_folder)
+    try:
+        if os.path.isdir(path):
+            subprocess.Popen(f'explorer "{path}"')
+        else:
+            logging.error(f"Path not found or is not a directory: {path}")
+    except Exception as e:
+        logging.error(f"Failed to open folder {path}. Error: {e}")
 
 
 def stop_script():

@@ -1,6 +1,5 @@
 # main_window.py
 
-from pathlib import Path
 import tkinter as tk
 import logging
 import json
@@ -10,13 +9,17 @@ from screeninfo import get_monitors
 from config_window import ConfigWindow
 from PIL import Image
 from select_window import FolderSelectorApp
+import pyautogui
 
-script_dir = Path(__file__).resolve().parent
-relative_config_path = "../config.json"
-config_path = (script_dir / relative_config_path).resolve()
 
-relative_images_folder_path = "../images"
-images_folder = (script_dir / relative_images_folder_path).resolve()
+script_dir = os.getcwd()
+relative_config_folder_path = "assets/config.json"
+config_path_relative = os.path.join(script_dir, relative_config_folder_path)
+config_path = os.path.abspath(config_path_relative)
+
+relative_images_folder_path = "assets/images"
+images_folder_relative = os.path.join(script_dir, relative_images_folder_path)
+images_folder = os.path.abspath(images_folder_relative)
 
 
 class TkinterLogHandler(logging.Handler):
@@ -245,6 +248,9 @@ class Ui:
             )
             if len(self.loaded_images) == 0:
                 logging.info("No images to be loaded !")
+                pyautogui.alert(
+                    "No images were found, don't forget to add them and select them in the app !"
+                )
             logging.info("-----Stop Images Loading-----")
         if "selected_screen" in self.config:
             selected_screen = self.config["selected_screen"]

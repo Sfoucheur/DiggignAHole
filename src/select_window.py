@@ -1,13 +1,14 @@
-from pathlib import Path
 import tkinter as tk
 from tkinter import ttk
 import os
 import functools
 from customWidgets.checkbox_treeview import CheckboxTreeview
+import logging
 
-script_dir = Path(__file__).resolve().parent
-relative_images_folder_path = "../images"
-images_folder = (script_dir / relative_images_folder_path).resolve()
+script_dir = os.getcwd()
+relative_images_folder_path = "assets/images"
+images_folder_relative = os.path.join(script_dir, relative_images_folder_path)
+images_folder = os.path.abspath(images_folder_relative)
 
 
 class FolderSelectorApp:
@@ -172,7 +173,7 @@ class FolderSelectorApp:
         self.window.destroy()
         self.window.grab_release()
 
-    def get_directory_structure(self, root_dir):
+    def get_directory_structure(self, root_dir: str):
         """Create a dictionary that represents the folder structure of directory."""
         folder_structure = {}
         root_dir = root_dir.rstrip(os.sep)
@@ -185,15 +186,12 @@ class FolderSelectorApp:
                 lambda d, key: d.setdefault(key, {}), folders[:-1], folder_structure
             )
             parent[folders[-1]] = subdir
-
-        return folder_structure[root_dir]
+        return folder_structure["images"]
 
     def load_folders(self):
         # Get the folder structure as a nested dictionary
         self.folder_structure = {}
-        self.folder_structure[""] = self.get_directory_structure(
-            images_folder.as_posix()
-        )
+        self.folder_structure[""] = self.get_directory_structure(images_folder)
         # Populate the treeview with the folder structure
         self.populate_treeview(self.folder_structure)
 
