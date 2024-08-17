@@ -99,8 +99,9 @@ def find_and_click(images: List[Image.Image], screen_region):
 
                 # Extract and log image name
                 image_name = os.path.splitext(os.path.basename(img.filename))[0]
-                logging.info(f"Clicked on {center_x}, {
-                             center_y} for {image_name.capitalize()}")
+                logging.info(
+                    f"Clicked on {center_x}, {center_y} for {image_name.capitalize()}"
+                )
 
                 return True
 

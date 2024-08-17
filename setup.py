@@ -3,9 +3,11 @@ import sys
 import os
 
 # Define the path to the folder you want to include
+assets = "assets/"
 
 build_exe_options = {
     "build_exe": "build/kamsoutrax",
+    "include_files": [assets],
     "optimize": 2,
 }
 
