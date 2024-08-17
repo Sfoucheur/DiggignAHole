@@ -4,7 +4,7 @@ import pyautogui
 import time
 import random
 import os
-import keyboard
+from pynput import keyboard
 from typing import List
 import numpy as np
 from scipy import interpolate
@@ -188,15 +188,23 @@ def main():
         raise
 
 
+def set_hotkeys():
+    with keyboard.GlobalHotKeys(
+        {
+            "<f7>": start_script,
+            "<f8>": stop_script,
+            "<ctrl>+<alt>+c": main_ui.exit_script,
+        }
+    ) as h:
+        h.join()
+
+
 # Initialize UI
 main_ui = Ui(start_script, stop_script, open_folder)
 
 if __name__ == "__main__":
     logging.info("Starting the application")
-    if platform.system() == "Windows":
-        keyboard.add_hotkey("F7", start_script)
-        keyboard.add_hotkey("F8", stop_script)
-        keyboard.add_hotkey("ctrl+alt+c", main_ui.exit_script)
+    threading.Thread(target=set_hotkeys, daemon=True).start()
     logging.info("Press 'F7' to start the script.")
     logging.info("Press 'F8' to pause the script.")
     logging.info("Press 'Ctrl+alt+c' to stop the script.")
