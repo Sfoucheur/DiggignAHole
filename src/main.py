@@ -14,6 +14,7 @@ from ui import Ui
 from PIL import Image  # Import PIL for image handling
 import threading  # Import threading
 import sys
+import platform
 
 # Configure logging
 logging.basicConfig(
@@ -118,13 +119,20 @@ def find_and_click(images: List[Image.Image], screen_region):
 
 
 def open_folder():
-    # explorer would choke on forward slashes
+    # Determine the base directory
     base_dir = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-    path = os.path.join(base_dir, "assets", "images")
+    path = os.path.join(base_dir, "../assets", "images")
     path = os.path.normpath(images_folder)
+
     try:
         if os.path.isdir(path):
-            subprocess.Popen(f'explorer "{path}"')
+            # Check the platform and open the directory accordingly
+            if platform.system() == "Windows":
+                subprocess.Popen(f'explorer "{path}"')
+            elif platform.system() == "Linux":
+                subprocess.Popen(["xdg-open", path])
+            else:
+                logging.error(f"Unsupported OS: {platform.system()}")
         else:
             logging.error(f"Path not found or is not a directory: {path}")
     except Exception as e:
@@ -185,9 +193,10 @@ main_ui = Ui(start_script, stop_script, open_folder)
 
 if __name__ == "__main__":
     logging.info("Starting the application")
-    keyboard.add_hotkey("F7", start_script)
-    keyboard.add_hotkey("F8", stop_script)
-    keyboard.add_hotkey("ctrl+alt+c", main_ui.exit_script)
+    if platform.system() == "Windows":
+        keyboard.add_hotkey("F7", start_script)
+        keyboard.add_hotkey("F8", stop_script)
+        keyboard.add_hotkey("ctrl+alt+c", main_ui.exit_script)
     logging.info("Press 'F7' to start the script.")
     logging.info("Press 'F8' to pause the script.")
     logging.info("Press 'Ctrl+alt+c' to stop the script.")
