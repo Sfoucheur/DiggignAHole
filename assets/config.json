@@ -1,1 +1,1 @@
-{"selected_screen": "Screen 1 (2560x1440)", "grays_scale_state": true, "detection_threshold": 80, "click_randomness": 5, "move_duration": 10, "sleep_duration": 100, "selected_images": []}
+{ "selected_screen": "", "grays_scale_state": false, "detection_threshold": 80, "click_randomness": 5, "move_duration": 5, "sleep_duration": 100, "selected_images": [""] }
