@@ -262,9 +262,7 @@ class Ui:
             )
             if len(self.loaded_images) == 0:
                 logging.info("No images to be loaded !")
-                pyautogui.alert(
-                    "No images were found, don't forget to add them and select them in the app !"
-                )
+                logging.info("Don't forget to select some images !")
             logging.info("-----Stop Images Loading-----")
         if "selected_screen" in self.config:
             selected_screen = self.config["selected_screen"]
