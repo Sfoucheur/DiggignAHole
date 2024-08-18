@@ -41,10 +41,7 @@ def point_dist(x1, y1, x2, y2):
     return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 
-def moveBezier(center_x, center_y):
-    OFFSET_RANGE = main_ui.click_randomness_var.get()
-    center_x += random.randint(-OFFSET_RANGE, OFFSET_RANGE)
-    center_y += random.randint(-OFFSET_RANGE, OFFSET_RANGE)
+def moveBezier(center_x, center_y, config_duration):
     cp = random.randint(6, 15)
     x1, y1 = pyautogui.position()
     x = np.linspace(x1, center_x, num=cp, dtype="int")
@@ -61,7 +58,7 @@ def moveBezier(center_x, center_y):
         0, 1, num=2 + int(point_dist(x1, y1, center_x, center_y) / 50.0)
     )
     points = interpolate.splev(u_fine, tck)
-    duration = main_ui.move_duration_var.get()
+    duration = config_duration
     timeout = duration
     if duration != 0:
         timeout = duration / 1000.0
@@ -95,7 +92,15 @@ def find_and_click(images: List[Image.Image], screen_region):
                 left, top, width, height = location
                 center_x = left + width / 2
                 center_y = top + height / 2
-                moveBezier(center_x, center_y)
+                OFFSET_RANGE = main_ui.click_randomness_var.get()
+                center_x += random.randint(-OFFSET_RANGE, OFFSET_RANGE)
+                center_y += random.randint(-OFFSET_RANGE, OFFSET_RANGE)
+                move_speed = main_ui.move_duration_var.get()
+                if move_speed != 0:
+                    moveBezier(center_x, center_y, move_speed)
+                else:
+                    pyautogui.moveTo(center_x, center_y)
+
                 pyautogui.click()
 
                 # Extract and log image name

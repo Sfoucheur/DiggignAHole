@@ -220,22 +220,24 @@ class Ui:
         match = re.search(pattern, self.screen_var.get())
         return int(match.group(1)) - 1
 
-    def load_images_from_folders(self, folders):
-        config_images_list = self.config["selected_images"]
+    def load_images_from_folders(self, image_paths):
+        """Load images from a list of file paths."""
+        config_images_list = self.config.get("selected_images", [])
         images = []
-        for folder in folders:
-            base_folder_path = os.path.join(images_folder, folder)
-            if os.path.exists(base_folder_path):
-                for filename in os.listdir(base_folder_path):
-                    img_path = os.path.join(base_folder_path, filename)
-                    if os.path.isfile(img_path) and filename.lower().endswith(
-                        (".png", ".jpg", ".jpeg", ".bmp", ".gif")
-                    ):
-                        # Open the image and append the PIL Image object to the list
-                        logging.info(f"Load {re.sub(r"^.*images\\", "", img_path)}")
-                        images.append(Image.open(img_path))
+
+        for img_path in image_paths:
+            complete_path = os.path.join(images_folder, img_path)
+            if os.path.isfile(complete_path) and img_path.lower().endswith(
+                (".png", ".jpg", ".jpeg", ".bmp", ".gif")
+            ):
+                # If it's a valid image file, load it
+                logging.info(f"Load {img_path}")
+                images.append(Image.open(complete_path))
             else:
-                config_images_list.remove(folder)
+                # If the path is invalid or not an image, remove it from the config list
+                if img_path in config_images_list:
+                    config_images_list.remove(img_path)
+
         self.save_configuration({"selected_images": config_images_list}, False)
         return images
 

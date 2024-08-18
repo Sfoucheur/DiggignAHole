@@ -95,17 +95,28 @@ class CheckboxTreeview(ttk.Treeview):
 
     def _check_uncheck_all(self, state):
         """Check or uncheck all items."""
+        checked_items = set()
 
         def aux(item):
-            if item:
-                self.change_state(item, state)
             children = self.get_children(item)
-            for c in children:
-                aux(c)
+            if not children:  # It's a leaf node
+                if state == "checked" and self.tag_has("unchecked", item):
+                    self.change_state(item, state)
+                    checked_items.add(item)
+                elif state == "unchecked" and self.tag_has("checked", item):
+                    self.change_state(item, state)
+                    checked_items.add(item)
+            else:
+                for c in children:
+                    aux(c)
+                # Change the state of the current item only after processing its children
+                self.change_state(item, state)
 
         aux("")
+
+        # Call the on_checked callback with the list of leaf nodes that were changed
         if self.on_checked is not None:
-            self.on_checked(self.get_checked())
+            self.on_checked(list(checked_items), state == "checked")
 
     def check_all(self):
         """Check all items."""

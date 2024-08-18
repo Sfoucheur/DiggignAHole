@@ -60,19 +60,12 @@ class FolderSelectorApp:
 
     def on_checked(self, items, checked):
         if checked:
-            self.config["selected_images"].append(
-                *[
-                    self.get_full_path(item_id).replace("\\ ", "\\").strip()
-                    for item_id in items
-                ]
+            self.config["selected_images"].extend(
+                [self.get_full_path(item_id) for item_id in items]
             )
         else:
-            self.config["selected_images"].remove(
-                *[
-                    self.get_full_path(item_id).replace("\\ ", "\\").strip()
-                    for item_id in items
-                ]
-            )
+            for item in [self.get_full_path(item_id) for item_id in items]:
+                self.config["selected_images"].remove(item)
 
     def setup_styles(self):
         style = ttk.Style()
@@ -173,18 +166,34 @@ class FolderSelectorApp:
         self.window.grab_release()
 
     def get_directory_structure(self, root_dir: str):
-        """Create a dictionary that represents the folder structure of directory."""
+        """Create a dictionary that represents the folder structure of a directory, including only image files."""
         folder_structure = {}
         root_dir = root_dir.rstrip(os.sep)
         start = root_dir.rfind(os.sep) + 1
+        image_extensions = {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".bmp",
+            ".tiff",
+            ".svg",
+        }  # Set of image extensions
 
-        for path, dirs, _ in os.walk(root_dir):
+        for path, dirs, files in os.walk(root_dir):
             folders = path[start:].split(os.sep)
             subdir = {}
             parent = functools.reduce(
                 lambda d, key: d.setdefault(key, {}), folders[:-1], folder_structure
             )
+            # Add subdirectories
             parent[folders[-1]] = subdir
+
+            # Filter and add image files in the current directory
+            for file in files:
+                if os.path.splitext(file)[1].lower() in image_extensions:
+                    subdir[file] = {}  # Only add image files
+
         return folder_structure["images"]
 
     def load_folders(self):
@@ -200,7 +209,6 @@ class FolderSelectorApp:
 
     def _add_folder_recursive(self, insert_id, folder_structure):
         nodes_found = set()
-
         """Recursively add folders to the treeview based on the given folder_structure."""
         for folder, subfolders in folder_structure.items():
             folder_id = self.tree.insert(
