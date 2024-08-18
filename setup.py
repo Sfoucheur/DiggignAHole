@@ -7,9 +7,11 @@ import shutil
 assets = "assets/"
 
 build_exe_options = {
-    "build_exe": "build/kamsoutrax",
+    "build_exe": "build/kamasoutrax",
     "include_files": [assets],
     "optimize": 2,
+    "packages": ["pynput"],  # Ensure pynput is included
+    "includes": ["pynput.keyboard"],  # Explicitly include any specific modules
 }
 
 sys.path.append(os.path.realpath(sys.path[0] + "\\src"))
@@ -23,7 +25,7 @@ setup(
 )
 
 # Define the path to the built assets directory
-built_assets_dir = os.path.join("build", "kamsoutrax", "assets", "images")
+built_assets_dir = os.path.join("build", "kamasoutrax", "assets", "images")
 
 # Remove any .gitkeep files in the images directory
 for root, dirs, files in os.walk(built_assets_dir):
@@ -34,10 +36,10 @@ for root, dirs, files in os.walk(built_assets_dir):
             print(f"Removed {file_path}")
 
 # Create a .zip archive of the kamsoutrax folder
-output_zip = "build/kamsoutrax.zip"
+output_zip = "build/kamasoutrax.zip"
 print("Creating zip...")
 shutil.make_archive(
-    base_name="build/kamsoutrax", format="zip", root_dir="build/kamsoutrax"
+    base_name="build/kamasoutrax", format="zip", root_dir="build/kamasoutrax"
 )
 
 print(f"Created {output_zip}")

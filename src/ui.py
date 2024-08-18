@@ -62,27 +62,17 @@ class Ui:
         # Create window
         self.root.title("TunasMaximax")
         self.root.geometry("800x550")  # Increased height
-        self.root.resizable(width=False, height=False)
+        self.root.resizable(width=True, height=True)
 
-        # Set the background color of the window
+        # Initialize root window
         self.root.configure(bg=self.colour1)
+        self.root.columnconfigure(0, weight=0)  # Controls column
+        self.root.columnconfigure(1, weight=1)  # Logs column, expand
+        self.root.rowconfigure(0, weight=1)  # Main row, expand
 
         # Create frames
-        self.left_frame = tk.Frame(self.root, bg=self.colour1, padx=10, pady=10)
-        self.left_frame.grid(row=0, column=0, sticky=tk.NS, padx=(10, 0))
-        self.left_frame.columnconfigure(0, weight=1)
-        self.left_frame.rowconfigure(0, weight=0)  # Row for Start button
-        self.left_frame.rowconfigure(1, weight=0)  # Row for Stop button
-        self.left_frame.rowconfigure(2, weight=0)  # Row for Add Images button
-        self.left_frame.rowconfigure(3, weight=0)  # Row for Checkbox
-        self.left_frame.rowconfigure(4, weight=0)  # Row for Checkbox
-        self.left_frame.rowconfigure(5, weight=0)  # Row for Checkbox
-        self.left_frame.rowconfigure(6, weight=0)  # Row for Checkbox
-
-        self.right_frame = tk.Frame(self.root, bg=self.colour1, padx=10, pady=10)
-        self.right_frame.grid(row=0, column=1, sticky=tk.NSEW)
-        self.right_frame.columnconfigure(0, weight=1)
-        self.right_frame.rowconfigure(0, weight=1)
+        self.create_controls_frame()
+        self.create_logs_frame()
 
         # Create buttons and checkbox
         self.initButtons(start_script, stop_script, open_images_folder)
@@ -101,6 +91,26 @@ class Ui:
 
         # Run exit script on window close
         self.root.protocol("WM_DELETE_WINDOW", self.exit_script)
+
+    def create_controls_frame(self):
+        self.controls_frame = tk.Frame(
+            self.root,
+            bg=self.colour1,
+        )
+        self.controls_frame.grid(row=0, column=0, sticky=tk.N, padx=(10, 5), pady=10)
+        self.controls_frame.rowconfigure(0, weight=0)  # Row for Start button
+        self.controls_frame.rowconfigure(1, weight=0)  # Row for Stop button
+        self.controls_frame.rowconfigure(2, weight=0)  # Row for Add Images button
+        self.controls_frame.rowconfigure(3, weight=0)  # Row for Checkbox
+        self.controls_frame.rowconfigure(4, weight=0)  # Row for Checkbox
+        self.controls_frame.rowconfigure(5, weight=0)  # Row for Checkbox
+        self.controls_frame.rowconfigure(6, weight=0)  # Row for Checkbox
+
+    def create_logs_frame(self):
+        self.logs_frame = tk.Frame(self.root, bg=self.colour1)
+        self.logs_frame.grid(row=0, column=1, padx=(5, 10), pady=10, sticky=tk.NSEW)
+        self.logs_frame.columnconfigure(0, weight=1)
+        self.logs_frame.rowconfigure(0, weight=1)
 
     def createButton(self, text, command, parent_frame):
         button = tk.Button(
@@ -122,38 +132,42 @@ class Ui:
 
     def initButtons(self, start_script, stop_script, open_images_folder):
         # Start button
-        self.start_button = self.createButton("Start", start_script, self.left_frame)
+        self.start_button = self.createButton(
+            "Start", start_script, self.controls_frame
+        )
         self.start_button.grid(column=0, row=1, pady=5, sticky=tk.W)
 
         # Stop Button
-        self.stop_button = self.createButton("Stop", stop_script, self.left_frame)
+        self.stop_button = self.createButton("Stop", stop_script, self.controls_frame)
         self.stop_button.grid(column=0, row=2, pady=5, sticky=tk.W)
 
         # Open Select Folder Button
         self.select_button = self.createButton(
-            "Select images", self.open_select_window, self.left_frame
+            "Select images", self.open_select_window, self.controls_frame
         )
         self.select_button.grid(column=0, row=3, pady=5, sticky=tk.W)
 
         # Add Images Button
         self.add_images_button = self.createButton(
-            "Open images", open_images_folder, self.left_frame
+            "Open images", open_images_folder, self.controls_frame
         )
         self.add_images_button.grid(column=0, row=4, pady=5, sticky=tk.W)
 
         # Open Config Button
         self.config_button = self.createButton(
-            "Configuration", self.open_config_window, self.left_frame
+            "Configuration", self.open_config_window, self.controls_frame
         )
         self.config_button.grid(column=0, row=5, pady=5, sticky=tk.W)
 
         # Exit Button
-        self.exit_button = self.createButton("Exit", self.exit_script, self.left_frame)
+        self.exit_button = self.createButton(
+            "Exit", self.exit_script, self.controls_frame
+        )
         self.exit_button.grid(column=0, row=6, pady=5, sticky=tk.W)  # Moved to row 9
 
     def initStatusLabel(self):
         self.status_label = tk.Label(
-            self.left_frame,
+            self.controls_frame,
             text="Status: Stopped",
             bg=self.colour1,
             fg=self.colour2,
@@ -164,18 +178,16 @@ class Ui:
     def initLogArea(self):
         # Create a Text widget
         self.log_area = tk.Text(
-            self.right_frame,
+            self.logs_frame,
             wrap=tk.WORD,
-            height=30,
-            width=75,
             background=self.colour1,
             foreground=self.colour2,
             selectbackground=self.colour3,
             selectforeground=self.colour4,
             blockcursor=True,
-            borderwidth=0,
+            borderwidth=5,
         )
-        self.log_area.grid(column=0, row=0, pady=10, sticky=tk.W)
+        self.log_area.grid(column=0, row=0, pady=5, sticky=tk.NSEW)
 
         # Enable scrolling with mouse wheel
         self.log_area.bind_all("<MouseWheel>", self.on_mouse_wheel)
